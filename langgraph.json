@@ -1,0 +1,7 @@
+﻿{
+  "dependencies": ["-r requirements.txt"],
+  "graphs": {
+    "master_pipeline": "./workflows/master_orchestrator.py:app"
+  },
+  "env": ".env"
+}
