@@ -93,6 +93,17 @@
       margin-top: 8px;
       color: var(--muted);
     }
+    .auth-bar {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #141a33;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+    }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
@@ -229,6 +240,12 @@
     <main class="main">
       <h1>🧩 Harness Configurator Control Room</h1>
       <p class="subtitle">Separat backend-kontrol for pricing weights, feature-routing og vision inference flow.</p>
+      <div class="auth-bar">
+        <input id="adminKey" class="input" type="password" placeholder="Indsæt ADMIN/DPN key til interne API-kald" />
+        <button class="btn" onclick="saveAdminKey()">🔐 Gem nøgle</button>
+        <button class="btn" onclick="clearAdminKey()">🧹 Ryd</button>
+      </div>
+      <div id="api-status" class="note">Ingen API-nøgle gemt endnu. Harness-knapper kører først live når nøgle er sat.</div>
 
       <section id="view-pricing" class="panel">
         <h3>Prisfaktorer</h3>
@@ -346,6 +363,57 @@
       return new Intl.NumberFormat('da-DK', { style: 'currency', currency: 'DKK', maximumFractionDigits: 0 }).format(v);
     }
 
+    function getAdminKey() {
+      return sessionStorage.getItem('dpn_admin_key') || '';
+    }
+
+    function setApiStatus(text, ok) {
+      var el = document.getElementById('api-status');
+      el.textContent = text;
+      el.style.color = ok ? 'var(--mint)' : 'var(--muted)';
+    }
+
+    function saveAdminKey() {
+      var val = document.getElementById('adminKey').value.trim();
+      if (!val) {
+        setApiStatus('Ingen nøgle at gemme.', false);
+        return;
+      }
+      sessionStorage.setItem('dpn_admin_key', val);
+      document.getElementById('adminKey').value = '';
+      setApiStatus('API-nøgle gemt i denne browser-session.', true);
+    }
+
+    function clearAdminKey() {
+      sessionStorage.removeItem('dpn_admin_key');
+      document.getElementById('adminKey').value = '';
+      setApiStatus('API-nøgle er ryddet.', false);
+    }
+
+    async function harnessCall(path, method, body) {
+      var key = getAdminKey();
+      if (!key) {
+        throw new Error('Mangler API-nøgle. Klik "Gem nøgle" først.');
+      }
+
+      var res = await fetch(path, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: body ? JSON.stringify(body) : undefined
+      });
+
+      var data = {};
+      try { data = await res.json(); } catch (_) {}
+      if (!res.ok) {
+        var msg = (data && (data.error || data.detail || data.message)) || ('HTTP ' + res.status);
+        throw new Error(msg);
+      }
+      return data;
+    }
+
     function syncPricing() {
       var shape = Number(document.getElementById('shape').value);
       var length = Number(document.getElementById('length').value);
@@ -378,8 +446,31 @@
       document.getElementById('pricing-status').textContent = 'Nulstillet lokalt.';
     }
 
-    function pushPricingConfig() {
-      document.getElementById('pricing-status').textContent = 'Pricing-config gemt til dispatch (simuleret).';
+    async function pushPricingConfig() {
+      var payload = {
+        shape_multiplier: Number(document.getElementById('shape').value),
+        length_multiplier: Number(document.getElementById('length').value),
+        art_multiplier: Number(document.getElementById('art').value),
+        labor_minutes: Number(document.getElementById('labor').value),
+        material_dkk: Number(document.getElementById('material').value),
+        margin_percent: Number(document.getElementById('margin').value)
+      };
+
+      try {
+        await harnessCall('/api/harness/s-agents/config', 'POST', {
+          kind: 'ai_repair_applied',
+          payload: {
+            source: 'harness-configurator',
+            pricing: payload
+          },
+          source_ref: 'harness-configurator/pricing'
+        });
+        document.getElementById('pricing-status').textContent = 'Pricing-config sendt live til s-config.';
+        setApiStatus('Live API-kald lykkedes (pricing).', true);
+      } catch (err) {
+        document.getElementById('pricing-status').textContent = 'Fejl ved gem: ' + err.message;
+        setApiStatus('API-fejl: ' + err.message, false);
+      }
     }
 
     function syncAB() {
@@ -390,26 +481,93 @@
       document.getElementById('abB-v').textContent = b + '%';
     }
 
-    function saveAB() {
-      document.getElementById('ab-status').textContent = 'A/B-router opdateret (simuleret) med ny split og gate.';
+    async function saveAB() {
+      var a = Number(document.getElementById('abA').value);
+      var b = Number(document.getElementById('abB').value);
+      var gate = document.getElementById('gate').value;
+      var fallback = document.getElementById('fallback').value;
+      try {
+        await harnessCall('/api/harness/emit', 'POST', {
+          agent: 's-web',
+          kind: 'ab_router_updated',
+          severity: 'notice',
+          payload: {
+            source: 'harness-configurator',
+            split: { A: a, B: b },
+            gate: gate,
+            fallback: fallback
+          },
+          source_ref: 'harness-configurator/ab'
+        });
+        document.getElementById('ab-status').textContent = 'A/B-router opdateret live via harness bus.';
+        setApiStatus('Live API-kald lykkedes (A/B).', true);
+      } catch (err) {
+        document.getElementById('ab-status').textContent = 'Fejl ved A/B gem: ' + err.message;
+        setApiStatus('API-fejl: ' + err.message, false);
+      }
     }
 
-    function rolloutB() {
+    async function rolloutB() {
       document.getElementById('abA').value = '20';
       syncAB();
-      document.getElementById('ab-status').textContent = 'Rollout udført: 80% trafik til variant B (simuleret).';
+      try {
+        await harnessCall('/api/harness/emit', 'POST', {
+          agent: 's-web',
+          kind: 'ab_rollout_b',
+          severity: 'notice',
+          payload: {
+            source: 'harness-configurator',
+            split: { A: 20, B: 80 }
+          },
+          source_ref: 'harness-configurator/rollout-b'
+        });
+        document.getElementById('ab-status').textContent = 'Rollout udført live: 80% trafik til variant B.';
+        setApiStatus('Live API-kald lykkedes (rollout).', true);
+      } catch (err) {
+        document.getElementById('ab-status').textContent = 'Rollout fejlede: ' + err.message;
+        setApiStatus('API-fejl: ' + err.message, false);
+      }
     }
 
-    function saveVision() {
-      document.getElementById('vision-status').textContent = 'Vision-konfiguration sendt til inferens-controller (simuleret).';
+    async function saveVision() {
+      var modelTag = document.getElementById('modelTag').value.trim();
+      var conf = Number(document.getElementById('conf').value);
+      var iou = Number(document.getElementById('iou').value);
+      try {
+        await harnessCall('/api/harness/s-agents/vision', 'POST', {
+          kind: 'render_precheck_passed',
+          payload: {
+            source: 'harness-configurator',
+            model_tag: modelTag,
+            confidence_threshold: conf,
+            nms_iou: iou
+          },
+          source_ref: 'harness-configurator/vision'
+        });
+        document.getElementById('vision-status').textContent = 'Vision-konfiguration sendt live til s-vision.';
+        setApiStatus('Live API-kald lykkedes (vision config).', true);
+      } catch (err) {
+        document.getElementById('vision-status').textContent = 'Vision save fejlede: ' + err.message;
+        setApiStatus('API-fejl: ' + err.message, false);
+      }
     }
 
-    function warmupVision() {
-      document.getElementById('vision-status').textContent = 'Warmup trigget på YOLO26 runtime (simuleret).';
+    async function warmupVision() {
+      try {
+        var result = await harnessCall('/api/harness/s-agents/vision', 'GET');
+        document.getElementById('vision-status').textContent = 'Warmup/health check kørt. Roboflow status: ' + (result.roboflow_status != null ? result.roboflow_status : 'ukendt');
+        setApiStatus('Live API-kald lykkedes (vision health).', true);
+      } catch (err) {
+        document.getElementById('vision-status').textContent = 'Warmup/health fejlede: ' + err.message;
+        setApiStatus('API-fejl: ' + err.message, false);
+      }
     }
 
     syncPricing();
     syncAB();
+    if (getAdminKey()) {
+      setApiStatus('API-nøgle fundet i session. Klar til live-kald.', true);
+    }
   </script>
 </body>
 </html>
