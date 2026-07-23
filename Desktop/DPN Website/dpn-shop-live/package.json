@@ -1,0 +1,1 @@
+{"name":"dpn-shop-live","version":"1.0.0","private":true,"engines":{"node":"24.x"},"dependencies":{"@babel/standalone":"^8.0.3"}}
