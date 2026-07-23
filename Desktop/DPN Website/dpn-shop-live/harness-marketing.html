@@ -25,18 +25,28 @@
 				var(--bg);
 			min-height: 100vh;
 		}
-		.wrap { max-width: 1200px; margin: 0 auto; padding: 28px 18px 44px; }
-		.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-		h1 { margin: 0; font-size: clamp(1.5rem, 2.9vw, 2.3rem); }
-		.back {
-			color: var(--text);
+		.app { display: flex; min-height: 100vh; }
+		.sidebar { width: 290px; border-right: 1px solid var(--line); background: #0d1828; padding: 24px 12px; }
+		.logo { padding: 0 12px 14px; border-bottom: 1px solid var(--line); }
+		.logo h2 { margin: 0; font-size: 18px; }
+		.logo p { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+		.nav-list { list-style: none; margin: 0; padding: 14px 0 0; display: flex; flex-direction: column; gap: 8px; }
+		.nav-link-main, .nav-item {
+			display: block;
 			text-decoration: none;
-			border: 1px solid var(--line);
-			background: #16283f;
-			padding: 10px 14px;
+			padding: 11px 12px;
+			border: 1px solid #30527a;
 			border-radius: 10px;
-			display: inline-block;
+			color: var(--text);
+			background: #12233a;
+			cursor: pointer;
+			font-size: 14px;
 		}
+		.nav-item.active { border-color: var(--accent2); box-shadow: inset 0 0 0 1px var(--accent2); }
+		.separator { height: 1px; background: var(--line); margin: 8px 0; }
+		.main { flex: 1; }
+		.wrap { max-width: 1200px; margin: 0 auto; padding: 28px 18px 44px; }
+		h1 { margin: 0; font-size: clamp(1.5rem, 2.9vw, 2.3rem); }
 		.panel {
 			margin-top: 16px;
 			border: 1px solid var(--line);
@@ -59,34 +69,64 @@
 		}
 		.tile b { color: var(--accent2); }
 		.tile p { margin: 8px 0 0; color: var(--muted); }
+		.hidden { display: none; }
 	</style>
 </head>
 <body>
-	<main class="wrap">
-		<div class="top">
-			<h1>🚀 Marketing &amp; Feeds Harness</h1>
-			<a class="back" href="/harness-control.html">← Tilbage til Ordrelayout</a>
-		</div>
-
-		<section class="panel">
-			<div id="dpn-marketing-root">
-				<p class="muted">Marketing-layout er oprettet fra bunden og klar til næste modul.</p>
-				<div class="grid">
-					<article class="tile">
-						<b>Campaign Feed</b>
-						<p>Visning af aktive kampagner og status.</p>
-					</article>
-					<article class="tile">
-						<b>Creative Queue</b>
-						<p>Kreative assets klar til publicering.</p>
-					</article>
-					<article class="tile">
-						<b>Channel Health</b>
-						<p>Overblik over performance på kanaler.</p>
-					</article>
-				</div>
+	<div class="app">
+		<aside class="sidebar">
+			<div class="logo">
+				<h2>DPN Marketing</h2>
+				<p>Campaign + feed operations</p>
 			</div>
-		</section>
-	</main>
+			<ul class="nav-list">
+				<li><a href="/harness-control.html" class="nav-link-main">⬅️ Tilbage til Ordre</a></li>
+				<li><a href="/harness-agents.html" class="nav-link-main">🤖 Gå til AI Agenter [13]</a></li>
+				<li><div class="separator"></div></li>
+				<li><button class="nav-item active" data-submenu="channels" onclick="setActiveSubMenu('channels')">📱 SoMe Kanaler</button></li>
+				<li><button class="nav-item" data-submenu="feeds" onclick="setActiveSubMenu('feeds')">📈 Salgs-Feeds</button></li>
+			</ul>
+		</aside>
+
+		<main class="main wrap">
+			<h1>🚀 Marketing &amp; Feeds Harness</h1>
+
+			<section class="panel" id="view-channels">
+				<div id="dpn-marketing-root">
+					<p class="muted">Marketing-layout er oprettet fra bunden og klar til næste modul.</p>
+					<div class="grid">
+						<article class="tile">
+							<b>Campaign Feed</b>
+							<p>Visning af aktive kampagner og status.</p>
+						</article>
+						<article class="tile">
+							<b>Creative Queue</b>
+							<p>Kreative assets klar til publicering.</p>
+						</article>
+						<article class="tile">
+							<b>Channel Health</b>
+							<p>Overblik over performance på kanaler.</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section class="panel hidden" id="view-feeds">
+				<h2>📈 Salgs-Feeds</h2>
+				<p class="muted">Feed-visning er klar som separat modul til næste iteration.</p>
+			</section>
+		</main>
+	</div>
+
+	<script>
+		function setActiveSubMenu(menu) {
+			var navItems = document.querySelectorAll('.nav-item[data-submenu]');
+			navItems.forEach(function (el) {
+				el.classList.toggle('active', el.dataset.submenu === menu);
+			});
+			document.getElementById('view-channels').classList.toggle('hidden', menu !== 'channels');
+			document.getElementById('view-feeds').classList.toggle('hidden', menu !== 'feeds');
+		}
+	</script>
 </body>
 </html>

@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DPN Agent Swarm Command Center</title>
+  <style>
+    :root {
+      --pink: #f45ca5;
+      --mint: #8cd9d1;
+      --paper: #fafaf8;
+      --ink: #161616;
+      --gold: #caa24a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background-color: #0b0b0f;
+      color: var(--paper);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 260px;
+      background-color: var(--ink);
+      border-right: 1px solid #222;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+    }
+    .logo-section { padding: 0 24px 32px; border-bottom: 1px solid #222; }
+    .logo-text {
+      color: var(--paper);
+      font-size: 18px;
+      text-transform: uppercase;
+      margin: 0;
+      letter-spacing: 0.04em;
+    }
+    .logo-sub { color: var(--pink); font-size: 11px; margin-top: 4px; }
+    .nav-list {
+      list-style: none;
+      padding: 24px 12px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nav-link-main {
+      padding: 12px 16px;
+      border-radius: 4px;
+      color: #ccc;
+      font-size: 13px;
+      text-transform: uppercase;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      border: 1px solid #333;
+      background: #1c1c22;
+    }
+    .nav-item {
+      padding: 12px 16px;
+      border-radius: 4px;
+      color: #888;
+      font-size: 13px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    .nav-item:hover { background: #222; color: var(--paper); }
+    .nav-item.active {
+      background: #1e1e24;
+      color: var(--pink);
+      font-weight: 700;
+      border-left: 3px solid var(--pink);
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #0f0f14;
+    }
+    .top-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+    .view-area { padding: 32px; overflow-y: auto; flex: 1; }
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .agent-card {
+      background: var(--ink);
+      border: 1px solid #222;
+      padding: 24px;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 220px;
+    }
+    .agent-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+    .agent-name { font-size: 16px; text-transform: uppercase; color: var(--paper); font-weight: 700; }
+    .agent-file { font-family: "Consolas", "Courier New", monospace; font-size: 11px; color: #666; margin-top: 2px; }
+    .agent-cron {
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 12px;
+      color: var(--gold);
+      background: #1c1c1a;
+      padding: 4px 8px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .badge {
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge.active { background: rgba(140, 217, 209, 0.1); color: var(--mint); border: 1px solid var(--mint); }
+    .badge.paused { background: rgba(239, 68, 68, 0.1); color: var(--pink); border: 1px solid var(--pink); }
+    .btn-killswitch {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid #ef4444;
+      padding: 16px 24px;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      border-radius: 2px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 32px;
+      letter-spacing: -0.5px;
+    }
+    .btn-killswitch:hover { background: #ef4444; color: var(--ink); }
+    .btn-action {
+      background: #222;
+      color: #ccc;
+      border: 1px solid #444;
+      padding: 6px 12px;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      border-radius: 2px;
+    }
+    .btn-action:hover { background: var(--mint); color: var(--ink); border-color: var(--mint); font-weight: 700; }
+  </style>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="dpn-agents-root" style="display: flex; width: 100vw; height: 100vh;"></div>
+
+  <script type="text/babel">
+    function AgentsControlRoom() {
+      const [globalStatus, setGlobalStatus] = React.useState('AKTIV');
+
+      const [agents] = React.useState([
+        { id: 'clara', name: 'Content-Clara', file: 'clara.js', cron: 'Man/Ons/Fre 08:00', task: 'SoMe content til IG/TikTok/LinkedIn', status: 'Aktiv' },
+        { id: 'nikoline', name: 'Newsletter-Nikoline', file: 'nikoline.js', cron: '1. i mdr 08:00', task: 'Månedsnyhedsbrev', status: 'Aktiv' },
+        { id: 'trine', name: 'Trend-Trine', file: 'trine.js', cron: 'Man 07:00', task: 'Ugentlig trend-scanning', status: 'Aktiv' },
+        { id: 'drop', name: 'Drop-Scheduler', file: 'drop.js', cron: 'Dagligt 08:00', task: 'Produktlanceringsplanlægning', status: 'Aktiv' },
+        { id: 'anna', name: 'Order-Anna', file: 'anna.js', cron: 'Hver 4. time', task: 'Ordre-livscyklus (produktion→GLS)', status: 'Aktiv' },
+        { id: 'ida', name: 'Inventory-Ida', file: 'ida.js', cron: 'Man 07:30', task: 'Pigment ROP-analyse', status: 'Aktiv' },
+        { id: 'tone', name: 'Campaign-Tone', file: 'tone.js', cron: '—', task: 'Grand Slam kampagner', status: 'Aktiv' },
+        { id: 'karla', name: 'Support-Karla', file: 'karla.js', cron: 'Webhook', task: 'Inbound email-triage', status: 'Aktiv' },
+        { id: 'outreach', name: 'Outreach-Otto', file: 'outreach.js', cron: '—', task: 'Influencer outreach', status: 'Aktiv' },
+        { id: 'feedback', name: 'Feedback-Loop', file: 'feedback.js', cron: '02:00 natlig', task: 'Self-learning voice calibration', status: 'Aktiv' },
+        { id: 'maja', name: 'Catalog-Maja', file: 'maja.js', cron: '—', task: 'WooCommerce sync + cache', status: 'Aktiv' },
+        { id: 'freja', name: 'Pricing-Freja', file: 'freja.js', cron: '—', task: 'Dynamisk prisoptimering', status: 'Aktiv' },
+        { id: 'astrid', name: 'Inventory-Astrid', file: 'astrid.js', cron: '04:00 dagligt', task: 'Audit guard + email coordinator', status: 'Aktiv' },
+        { id: 'anja', name: 'Beauty Advisor-Anja', file: 'anja.js', cron: 'On-demand', task: 'Humanic AI chat med hukommelse', status: 'Aktiv' }
+      ]);
+
+      const triggerAgentNow = (id, name) => {
+        fetch('/api/admin/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentId: id })
+        })
+          .then(() => alert('⚡ Manuel eksekvering afsendt til dispatch for ' + name + '!'))
+          .catch(() => alert('Kunne ikke kontakte /api/admin/trigger for ' + name));
+      };
+
+      const toggleGlobalKillSwitch = () => {
+        const nextState = globalStatus === 'AKTIV' ? '🛑 STOPPET (GLOBAL KILL)' : 'AKTIV';
+        setGlobalStatus(nextState);
+        alert('Global Meta-Harness status ændret i Redis til: ' + nextState);
+      };
+
+      return (
+        <div style={{ display: 'flex', width: '100%', height: '100%' }}>
+          <div className="sidebar">
+            <div className="logo-section">
+              <h2 className="logo-text">del Pilar Nails</h2>
+              <div className="logo-sub">Agent Swarm [13]</div>
+            </div>
+            <ul className="nav-list">
+              <li><a href="/harness-control.html" className="nav-link-main">⬅️ Tilbage til Ordre</a></li>
+              <li><a href="/harness-marketing.html" className="nav-link-main">⬅️ Tilbage til Marketing</a></li>
+              <li style={{ height: '1px', background: '#222', margin: '8px 0' }}></li>
+              <li className="nav-item active">🤖 AI Medarbejdere [13]</li>
+            </ul>
+          </div>
+
+          <div className="main-content">
+            <div className="top-header">
+              <h2 style={{ textTransform: 'uppercase', fontSize: '20px', margin: 0 }}>Staff Framework &amp; Swarm Status [13]</h2>
+              <div style={{ fontFamily: 'Consolas, Courier New, monospace', fontSize: '12px', color: globalStatus === 'AKTIV' ? 'var(--mint)' : '#ef4444', fontWeight: 'bold' }}>
+                STATUS: {globalStatus}
+              </div>
+            </div>
+
+            <div className="view-area">
+              <button className="btn-killswitch" onClick={toggleGlobalKillSwitch}>
+                {globalStatus === 'AKTIV'
+                  ? '🛑 NØDSTOP OVERFOR ALLE 14 AGENTER (KILL SWITCH)'
+                  : '⚡ AKTIVÉR GLOBAL AUTONOM DRIFT'}
+              </button>
+
+              <div className="agents-grid">
+                {agents.map((agent) => (
+                  <div className="agent-card" key={agent.id}>
+                    <div>
+                      <div className="agent-header">
+                        <div>
+                          <div className="agent-name">{agent.name}</div>
+                          <div className="agent-file">api/agents/{agent.file}</div>
+                        </div>
+                        <span className="agent-cron">{agent.cron}</span>
+                      </div>
+                      <p style={{ fontSize: '14px', color: '#ccc', margin: '16px 0 0', lineHeight: '1.4' }}>
+                        Opgave: {agent.task}
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #222' }}>
+                      <span className={globalStatus === 'AKTIV' ? 'badge active' : 'badge paused'}>
+                        {globalStatus === 'AKTIV' ? agent.status : 'Pauset'}
+                      </span>
+                      <button className="btn-action" onClick={() => triggerAgentNow(agent.id, agent.name)}>
+                        ⚡ Kør Nu
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('dpn-agents-root'));
+    root.render(<AgentsControlRoom />);
+  </script>
+</body>
+</html>
