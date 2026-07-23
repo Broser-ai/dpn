@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "jsx": "preserve",
+    "allowJs": true,
+    "checkJs": false,
+    "moduleResolution": "bundler",
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*"]
+    },
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": [
+    "app/**/*",
+    "api/**/*",
+    "*.html",
+    "*.js",
+    "*.jsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".vercel",
+    "activepieces",
+    "flowise",
+    "anythingmcp",
+    "postgres",
+    "redis"
+  ]
+}
