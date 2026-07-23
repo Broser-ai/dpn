@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DPN Harness Configurator Control</title>
+  <style>
+    :root {
+      --bg: #0f111b;
+      --panel: #171b2e;
+      --line: #2c3252;
+      --text: #f2f5ff;
+      --muted: #9ca6d1;
+      --pink: #f45ca5;
+      --mint: #8cd9d1;
+      --gold: #caa24a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at -10% -20%, rgba(140,217,209,0.2), transparent 60%),
+        radial-gradient(900px 500px at 120% -30%, rgba(244,92,165,0.2), transparent 60%),
+        var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: #12162a;
+      padding: 24px 12px;
+    }
+    .brand {
+      padding: 0 12px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand h2 {
+      margin: 0;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .brand p { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+    .nav-list {
+      list-style: none;
+      margin: 0;
+      padding: 14px 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nav-link,
+    .nav-item {
+      display: block;
+      width: 100%;
+      text-decoration: none;
+      color: var(--text);
+      background: #1b2140;
+      border: 1px solid #364071;
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .nav-item.active {
+      border-color: var(--mint);
+      box-shadow: inset 0 0 0 1px var(--mint);
+      color: var(--mint);
+    }
+    .separator {
+      height: 1px;
+      background: var(--line);
+      margin: 8px 0;
+    }
+    .main {
+      padding: 28px 20px 40px;
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+    }
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      background: color-mix(in srgb, var(--panel) 90%, #000);
+    }
+    .panel h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--mint);
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .row label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    input[type="range"] {
+      width: 160px;
+      accent-color: var(--pink);
+    }
+    .value {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      color: var(--gold);
+      min-width: 56px;
+      text-align: right;
+    }
+    .select,
+    .input {
+      background: #141a34;
+      border: 1px solid #394170;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      min-width: 130px;
+    }
+    .tag {
+      display: inline-block;
+      padding: 4px 8px;
+      border: 1px solid #3b4473;
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      margin-right: 6px;
+      margin-top: 6px;
+    }
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .kpi .box {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #151a30;
+    }
+    .kpi .label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+    .kpi .num {
+      margin-top: 6px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn {
+      border: 1px solid #3a4270;
+      background: #1d2342;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn.primary {
+      background: #351f34;
+      border-color: var(--pink);
+      color: #ffd8eb;
+    }
+    .note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .hidden { display: none; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>DPN Configurator</h2>
+        <p>Pris, routing og vision-kontrol</p>
+      </div>
+      <ul class="nav-list">
+        <li><a class="nav-link" href="/harness-control.html">📦 Ordre Harness</a></li>
+        <li><a class="nav-link" href="/harness-marketing.html">🚀 Marketing Harness</a></li>
+        <li><a class="nav-link" href="/harness-agents.html">🤖 Agents Harness</a></li>
+        <li><div class="separator"></div></li>
+        <li><button class="nav-item active" data-view="pricing" onclick="setView('pricing')">💰 Prisfaktorer</button></li>
+        <li><button class="nav-item" data-view="ab" onclick="setView('ab')">🧪 A/B Router</button></li>
+        <li><button class="nav-item" data-view="vision" onclick="setView('vision')">📷 YOLO26 Pipeline</button></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <h1>🧩 Harness Configurator Control Room</h1>
+      <p class="subtitle">Separat backend-kontrol for pricing weights, feature-routing og vision inference flow.</p>
+
+      <section id="view-pricing" class="panel">
+        <h3>Prisfaktorer</h3>
+        <div class="grid">
+          <div class="panel">
+            <h3>Base Multipliers</h3>
+            <div class="row"><label>Shape Complexity</label><input id="shape" type="range" min="0.8" max="1.8" step="0.05" value="1.15" oninput="syncPricing()" /><span id="shape-v" class="value">1.15x</span></div>
+            <div class="row"><label>Length Premium</label><input id="length" type="range" min="0.9" max="1.7" step="0.05" value="1.20" oninput="syncPricing()" /><span id="length-v" class="value">1.20x</span></div>
+            <div class="row"><label>Art Layer Cost</label><input id="art" type="range" min="1.0" max="2.4" step="0.05" value="1.45" oninput="syncPricing()" /><span id="art-v" class="value">1.45x</span></div>
+          </div>
+          <div class="panel">
+            <h3>Operational Costs</h3>
+            <div class="row"><label>Labor Minutes</label><input id="labor" class="input" type="number" value="72" min="20" max="240" oninput="syncPricing()" /></div>
+            <div class="row"><label>Material DKK</label><input id="material" class="input" type="number" value="38" min="5" max="400" oninput="syncPricing()" /></div>
+            <div class="row"><label>Margin %</label><input id="margin" class="input" type="number" value="62" min="10" max="90" oninput="syncPricing()" /></div>
+          </div>
+          <div class="panel">
+            <h3>Simuleret Output</h3>
+            <div class="kpi">
+              <div class="box"><div class="label">Calc Cost</div><div id="cost" class="num">0</div></div>
+              <div class="box"><div class="label">Target Price</div><div id="price" class="num">0</div></div>
+              <div class="box"><div class="label">Suggested Tier</div><div id="tier" class="num">—</div></div>
+            </div>
+            <div class="actions">
+              <button class="btn primary" onclick="pushPricingConfig()">💾 Gem pricing-config</button>
+              <button class="btn" onclick="resetPricing()">↺ Nulstil</button>
+            </div>
+            <div id="pricing-status" class="note">Ikke gemt endnu.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-ab" class="panel hidden">
+        <h3>A/B Router</h3>
+        <div class="grid">
+          <div class="panel">
+            <h3>Traffic Split</h3>
+            <div class="row"><label>Variant A (classic)</label><input id="abA" type="range" min="0" max="100" step="1" value="60" oninput="syncAB()" /><span id="abA-v" class="value">60%</span></div>
+            <div class="row"><label>Variant B (advisor)</label><input id="abB" type="range" min="0" max="100" step="1" value="40" oninput="syncAB()" /><span id="abB-v" class="value">40%</span></div>
+            <div class="note">Summen holdes automatisk på 100%.</div>
+          </div>
+          <div class="panel">
+            <h3>Routing Rules</h3>
+            <div class="row"><label>Primary Gate</label><select id="gate" class="select"><option value="country">Country</option><option value="device">Device</option><option value="utm">UTM Campaign</option></select></div>
+            <div class="row"><label>Fallback</label><select id="fallback" class="select"><option value="A">Variant A</option><option value="B">Variant B</option><option value="sticky">Sticky last</option></select></div>
+            <div class="tag">cookie: dpn_ab_variant</div>
+            <div class="tag">ttl: 30 dage</div>
+            <div class="tag">safe-mode: on</div>
+          </div>
+          <div class="panel">
+            <h3>Runtime Signals</h3>
+            <div class="kpi">
+              <div class="box"><div class="label">Conv A</div><div class="num">3.9%</div></div>
+              <div class="box"><div class="label">Conv B</div><div class="num">4.4%</div></div>
+              <div class="box"><div class="label">Winner</div><div class="num">B</div></div>
+            </div>
+            <div class="actions">
+              <button class="btn primary" onclick="saveAB()">💾 Gem router-regler</button>
+              <button class="btn" onclick="rolloutB()">🚀 80% til B</button>
+            </div>
+            <div id="ab-status" class="note">A/B-regler ikke opdateret endnu.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-vision" class="panel hidden">
+        <h3>YOLO26 Vision Pipeline</h3>
+        <div class="grid">
+          <div class="panel">
+            <h3>Model Runtime</h3>
+            <div class="row"><label>Model Tag</label><input id="modelTag" class="input" value="yolo26-nails-v3" /></div>
+            <div class="row"><label>Confidence Threshold</label><input id="conf" type="range" min="0.2" max="0.95" step="0.01" value="0.63" oninput="document.getElementById('conf-v').textContent = Number(this.value).toFixed(2)" /><span id="conf-v" class="value">0.63</span></div>
+            <div class="row"><label>NMS IoU</label><input id="iou" type="range" min="0.1" max="0.8" step="0.01" value="0.45" oninput="document.getElementById('iou-v').textContent = Number(this.value).toFixed(2)" /><span id="iou-v" class="value">0.45</span></div>
+          </div>
+          <div class="panel">
+            <h3>Pipeline Stages</h3>
+            <div class="tag">1. Hand detect</div>
+            <div class="tag">2. Nail crop</div>
+            <div class="tag">3. Shape classify</div>
+            <div class="tag">4. Defect guard</div>
+            <div class="tag">5. Fit score + recipe</div>
+            <div class="note">Fallback går til "photo-fit" hvis stage 3 confidence &lt; 0.42.</div>
+          </div>
+          <div class="panel">
+            <h3>Ops Health</h3>
+            <div class="kpi">
+              <div class="box"><div class="label">P95 Latency</div><div class="num">182ms</div></div>
+              <div class="box"><div class="label">Error Rate</div><div class="num">0.7%</div></div>
+              <div class="box"><div class="label">GPU Load</div><div class="num">61%</div></div>
+            </div>
+            <div class="actions">
+              <button class="btn primary" onclick="saveVision()">💾 Gem inference-setup</button>
+              <button class="btn" onclick="warmupVision()">⚡ Warmup Model</button>
+            </div>
+            <div id="vision-status" class="note">Ingen live-opdatering sendt endnu.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function setView(name) {
+      var views = ['pricing', 'ab', 'vision'];
+      views.forEach(function (v) {
+        document.getElementById('view-' + v).classList.toggle('hidden', v !== name);
+      });
+      var items = document.querySelectorAll('.nav-item[data-view]');
+      items.forEach(function (el) {
+        el.classList.toggle('active', el.dataset.view === name);
+      });
+    }
+
+    function money(v) {
+      return new Intl.NumberFormat('da-DK', { style: 'currency', currency: 'DKK', maximumFractionDigits: 0 }).format(v);
+    }
+
+    function syncPricing() {
+      var shape = Number(document.getElementById('shape').value);
+      var length = Number(document.getElementById('length').value);
+      var art = Number(document.getElementById('art').value);
+      var labor = Number(document.getElementById('labor').value);
+      var material = Number(document.getElementById('material').value);
+      var margin = Number(document.getElementById('margin').value) / 100;
+
+      document.getElementById('shape-v').textContent = shape.toFixed(2) + 'x';
+      document.getElementById('length-v').textContent = length.toFixed(2) + 'x';
+      document.getElementById('art-v').textContent = art.toFixed(2) + 'x';
+
+      var laborDKK = labor * 4.6;
+      var calcCost = (laborDKK + material) * shape * length * art;
+      var target = calcCost / (1 - margin);
+
+      document.getElementById('cost').textContent = money(calcCost);
+      document.getElementById('price').textContent = money(target);
+      document.getElementById('tier').textContent = target > 1100 ? 'Atelier+' : target > 700 ? 'Atelier' : 'Core';
+    }
+
+    function resetPricing() {
+      document.getElementById('shape').value = '1.15';
+      document.getElementById('length').value = '1.20';
+      document.getElementById('art').value = '1.45';
+      document.getElementById('labor').value = '72';
+      document.getElementById('material').value = '38';
+      document.getElementById('margin').value = '62';
+      syncPricing();
+      document.getElementById('pricing-status').textContent = 'Nulstillet lokalt.';
+    }
+
+    function pushPricingConfig() {
+      document.getElementById('pricing-status').textContent = 'Pricing-config gemt til dispatch (simuleret).';
+    }
+
+    function syncAB() {
+      var a = Number(document.getElementById('abA').value);
+      var b = 100 - a;
+      document.getElementById('abB').value = String(b);
+      document.getElementById('abA-v').textContent = a + '%';
+      document.getElementById('abB-v').textContent = b + '%';
+    }
+
+    function saveAB() {
+      document.getElementById('ab-status').textContent = 'A/B-router opdateret (simuleret) med ny split og gate.';
+    }
+
+    function rolloutB() {
+      document.getElementById('abA').value = '20';
+      syncAB();
+      document.getElementById('ab-status').textContent = 'Rollout udført: 80% trafik til variant B (simuleret).';
+    }
+
+    function saveVision() {
+      document.getElementById('vision-status').textContent = 'Vision-konfiguration sendt til inferens-controller (simuleret).';
+    }
+
+    function warmupVision() {
+      document.getElementById('vision-status').textContent = 'Warmup trigget på YOLO26 runtime (simuleret).';
+    }
+
+    syncPricing();
+    syncAB();
+  </script>
+</body>
+</html>

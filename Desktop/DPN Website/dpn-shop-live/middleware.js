@@ -5,6 +5,8 @@ const PROTECTED_PREFIXES = [
   "/harness-marketing.html",
   "/harness-agents",
   "/harness-agents.html",
+  "/harness-configurator",
+  "/harness-configurator.html",
   "/api/harness"
 ];
 
