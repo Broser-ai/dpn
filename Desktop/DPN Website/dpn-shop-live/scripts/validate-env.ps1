@@ -8,8 +8,16 @@ function Resolve-FirstSetValue {
   Param([string[]]$Names)
   foreach ($name in $Names) {
     $item = Get-Item -Path ("Env:" + $name) -ErrorAction SilentlyContinue
-    if ($item -and -not [string]::IsNullOrWhiteSpace($item.Value)) {
-      return @{ Name = $name; Value = $item.Value }
+    if ($item) {
+      $value = $item.Value
+      if ($null -eq $value) { continue }
+      $normalized = $value.Trim()
+      if (($normalized.StartsWith('"') -and $normalized.EndsWith('"')) -or ($normalized.StartsWith("'") -and $normalized.EndsWith("'"))) {
+        $normalized = $normalized.Substring(1, $normalized.Length - 2)
+      }
+      if (-not [string]::IsNullOrWhiteSpace($normalized)) {
+        return @{ Name = $name; Value = $normalized }
+      }
     }
   }
   return $null

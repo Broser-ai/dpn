@@ -10,10 +10,15 @@ fi
 
 resolve_first_set() {
   for name in "$@"; do
-    if [ -n "${!name:-}" ]; then
-      printf '%s' "$name"
-      return 0
+    value="${!name:-}"
+    if [ -z "$value" ]; then
+      continue
     fi
+    if [ "$value" = '""' ] || [ "$value" = "''" ]; then
+      continue
+    fi
+    printf '%s' "$name"
+    return 0
   done
   return 1
 }
